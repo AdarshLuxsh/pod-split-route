@@ -10,7 +10,7 @@ deliveries need rebalancing before dispatch.
 
 ## Live demo
 
-<!-- PAGES_URL -->
+**https://adarshluxsh.github.io/pod-split-route/**
 
 ## Running locally
 
