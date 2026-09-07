@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POD Update Application – POD Split Route</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design Tokens ─────────────────────────────────────────── */
+    :root {
+      --brand:        #1e40af;
+      --brand-light:  #3b82f6;
+      --brand-hover:  #1d3a9e;
+      --accent:       #0ea5e9;
+      --bg-app:       #0f172a;
+      --bg-surface:   #ffffff;
+      --bg-muted:     #f1f5f9;
+      --bg-card:      #ffffff;
+      --border:       #e2e8f0;
+      --border-focus: #3b82f6;
+      --text-primary: #0f172a;
+      --text-secondary:#475569;
+      --text-muted:   #94a3b8;
+      --success-bg:   #f0fdf4;
+      --success-text: #16a34a;
+      --success-border:#86efac;
+      --danger-bg:    #fff1f2;
+      --danger-text:  #dc2626;
+      --danger-border:#fca5a5;
+      --row-hover:    #f8faff;
+      --row-selected: #dbeafe;
+      --row-selected-marker: #1e40af;
+      --pill-bg:      #f0fdf4;
+      --pill-text:    #15803d;
+      --pill-border:  #86efac;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md:    0 4px 12px rgba(0,0,0,.10);
+      --shadow-lg:    0 20px 40px rgba(0,0,0,.25);
+      --radius:       10px;
+      --radius-sm:    6px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 13px;
+      background: var(--bg-app);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    /* ── App Shell ─────────────────────────────────────────────── */
+    .app-window {
+      width: min(1260px, calc(100vw - 24px));
+      height: calc(100vh - 24px);
+      background: #f8fafc;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Top Header Bar ────────────────────────────────────────── */
+    .header-bar {
+      background: var(--brand);
+      color: #ffffff;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .header-brand svg {
+      opacity: .85;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-btn {
+      height: 32px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.10);
+      color: #ffffff;
+      font: 600 12px 'Inter', sans-serif;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    .header-btn:hover { background: rgba(255,255,255,.20); }
+    .header-btn.danger:hover { background: rgba(220,38,38,.5); border-color: rgba(220,38,38,.6); }
+
+    /* ── Tab Navigation ────────────────────────────────────────── */
+    .tab-strip {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 0 16px;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .tab-strip::-webkit-scrollbar { display: none; }
+
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 14px 9px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+
+    .tab:hover { color: var(--brand); }
+
+    .tab.active {
+      color: var(--brand);
+      border-bottom-color: var(--brand-light);
+      font-weight: 600;
+    }
+
+    /* ── Main Content ──────────────────────────────────────────── */
+    .content {
+      flex: 1;
+      padding: 16px 20px 12px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: #f1f5f9;
+    }
+
+    /* ── Section Cards ─────────────────────────────────────────── */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #fafbfc;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand-light);
+      flex-shrink: 0;
+    }
+
+    /* ── Search Panel ──────────────────────────────────────────── */
+    .search-body {
+      padding: 14px 16px;
+    }
+
+    .form-row {
+      display: flex;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--text-secondary);
+    }
+
+    select,
+    input[type="text"] {
+      height: 34px;
+      min-width: 140px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0 10px;
+      background: #ffffff;
+      color: var(--text-primary);
+      font: 500 13px 'Inter', sans-serif;
+      transition: border-color .15s, box-shadow .15s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 9px center;
+      padding-right: 28px;
+    }
+
+    input[type="text"] {
+      background-image: none;
+      padding-right: 10px;
+    }
+
+    select:focus, input[type="text"]:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+    }
+
+    .form-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .selection-badge {
+      display: flex;
+      align-items: center;
+      height: 34px;
+      padding: 0 12px;
+      border-radius: var(--radius-sm);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 12px;
+      min-width: 90px;
+      justify-content: center;
+    }
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      font: 600 12px 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #ffffff;
+      border-color: var(--brand);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: var(--brand-hover);
+      border-color: var(--brand-hover);
+      box-shadow: 0 2px 8px rgba(30,64,175,.35);
+    }
+
+    .btn-outline {
+      background: #ffffff;
+      color: var(--brand);
+      border-color: #bfdbfe;
+    }
+    .btn-outline:hover:not(:disabled) {
+      background: #eff6ff;
+      border-color: var(--brand-light);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--bg-muted);
+      color: var(--text-primary);
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── Split Layout ──────────────────────────────────────────── */
+    .split-layout {
+      display: grid;
+      grid-template-columns: 1fr 52px 1fr;
+      gap: 0;
+      align-items: stretch;
+    }
+
+    /* ── Panel Headings ────────────────────────────────────────── */
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .panel-count {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 9px;
+    }
+
+    /* ── Data Tables ───────────────────────────────────────────── */
+    .grid-wrap, .allocation-box {
+      overflow: auto;
+      min-height: 260px;
+      max-height: 340px;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f8fafc;
+      color: var(--text-secondary);
+      font: 600 11px 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th.center { text-align: center; }
+
+    td {
+      padding: 8px 10px;
+      color: var(--text-primary);
+      border-bottom: 1px solid #f1f5f9;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .row-marker {
+      width: 30px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .checkbox-col { width: 46px; text-align: center; }
+    .parcel-col   { width: 110px; }
+    .status-col   { width: 90px; }
+
+    .route-row { cursor: pointer; transition: background .1s; }
+    .route-row:hover td { background: var(--row-hover); }
+    .route-row.selected td { background: var(--row-selected); }
+
+    .route-row.selected .row-marker {
+      color: var(--brand);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .parcel-check, #select-all-parcels {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+
+    .empty-cell {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    /* ── Status Pill ───────────────────────────────────────────── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .03em;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      border: 1px solid var(--pill-border);
+    }
+
+    /* ── Move Column ───────────────────────────────────────────── */
+    .move-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      background: #f8fafc;
+      gap: 6px;
+      padding: 8px 0;
+    }
+
+    .move-arrow {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--brand);
+      font-size: 16px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all .15s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .move-arrow:hover:not(:disabled) {
+      background: var(--brand);
+      color: #ffffff;
+      border-color: var(--brand);
+      box-shadow: 0 2px 8px rgba(30,64,175,.35);
+      transform: scale(1.08);
+    }
+
+    .move-arrow:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── Allocation Panel Right Column ─────────────────────────── */
+    .allocated-row:hover td { background: var(--row-hover); }
+
+    /* ── Footer ────────────────────────────────────────────────── */
+    .footer-row {
+      height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text-secondary);
+      font-size: 11px;
+      gap: 16px;
+    }
+
+    .footer-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success-text);
+      flex-shrink: 0;
+    }
+
+    #last-action {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Dividers inside the split card ────────────────────────── */
+    .split-section { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .left-panel  { border-right: none; border-radius: var(--radius) 0 0 var(--radius); }
+    .right-panel { border-left: none;  border-radius: 0 var(--radius) var(--radius) 0; }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .app-window { height: auto; min-height: calc(100vh - 24px); }
+      .split-layout { grid-template-columns: 1fr; }
+      .move-column { flex-direction: row; border: none; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; min-height: 0; }
+      .move-arrow { transform: rotate(90deg); }
+      .left-panel, .right-panel { border-radius: var(--radius); border: 1px solid var(--border); }
+      .form-actions { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-window">
+
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <header class="header-bar">
+      <div class="header-brand">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        POD Update Application
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" type="button" id="logout-btn">Logout</button>
+        <button class="header-btn danger" type="button" id="exit-btn">Exit</button>
+      </div>
+    </header>
+
+    <!-- ── Tab Navigation ─────────────────────────────────────── -->
+    <nav class="tab-strip" aria-label="Route allocation modules">
+      <div class="tab">Route Allocation</div>
+      <div class="tab">Extra Route Allocation</div>
+      <div class="tab active">POD Split Route</div>
+      <div class="tab">Manual Delivery Password</div>
+      <div class="tab">Reason for not Delivery/Collection</div>
+      <div class="tab">Driver List</div>
+      <div class="tab">Load Data</div>
+      <div class="tab">Change Routesheet Date</div>
+      <div class="tab">Not Deliver</div>
+      <div class="tab">Summary</div>
+      <div class="tab">Missing Parcels</div>
+      <div class="tab">Paper Delivery</div>
+      <div class="tab">Registration</div>
+    </nav>
+
+    <!-- ── Main Content ────────────────────────────────────────── -->
+    <main class="content">
+
+      <!-- Search Route Card -->
+      <div class="section-card">
+        <div class="section-header">
+          <span class="section-dot"></span>
+          <h2 class="section-title">Search Route</h2>
+        </div>
+        <div class="search-body">
+          <div class="form-row">
+
+            <div class="field">
+              <label for="user-select">Search User</label>
+              <select id="user-select"></select>
+            </div>
+
+            <div class="field">
+              <label for="route-select">From Route</label>
+              <select id="route-select"></select>
+            </div>
+
+            <div class="field">
+              <label for="allocate-route-select">Allocate to Route</label>
+              <select id="allocate-route-select" style="min-width:160px;"></select>
+            </div>
+
+            <div class="form-actions">
+              <span class="selection-badge" id="selection-count">0 selected</span>
+              <button class="btn btn-primary" id="search-btn" type="button" disabled>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Search
+              </button>
+              <button class="btn btn-ghost" id="clear-btn" type="button" disabled>Clear</button>
+              <button class="btn btn-primary" id="save-btn" type="button" disabled>Save</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- POD Split Route Card -->
+      <div class="section-card" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="section-header">
+          <span class="section-dot"></span>
+          <h2 class="section-title">POD Split Route</h2>
+        </div>
+
+        <div class="split-layout" style="flex:1; overflow:hidden;">
+
+          <!-- Left Panel – Parcels Assigned -->
+          <section aria-labelledby="parcel-list-title">
+            <div class="panel-heading">
+              <span class="panel-title" id="parcel-list-title">Parcels Assigned to Route</span>
+              <span class="panel-count" id="route-parcel-count">No route selected</span>
+            </div>
+            <div class="grid-wrap">
+              <table aria-label="Parcels assigned to selected route">
+                <colgroup>
+                  <col style="width:30px">
+                  <col style="width:40px">
+                  <col style="width:22%">
+                  <col style="width:22%">
+                  <col>
+                  <col style="width:90px">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th class="row-marker"></th>
+                    <th class="checkbox-col center">
+                      <input type="checkbox" id="select-all-parcels" aria-label="Select all displayed parcels" disabled>
+                    </th>
+                    <th>Parcel</th>
+                    <th>Consignment</th>
+                    <th>Delivery Area</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="parcel-table-body">
+                  <tr>
+                    <td class="empty-cell" colspan="6">Search user and from route, then click Search.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Middle – Move & Reverse Arrows -->
+          <div class="move-column">
+            <button class="move-arrow" id="move-arrow-btn" type="button" title="Move selected parcels to allocated route" disabled>&#8594;</button>
+            <button class="move-arrow" id="reverse-arrow-btn" type="button" title="Reverse selected allocated parcels back" disabled>&#8592;</button>
+          </div>
+
+          <!-- Right Panel – Allocated -->
+          <aside aria-label="Allocated route parcels">
+            <div class="panel-heading">
+              <span class="panel-title">Parcels Allocated to Route</span>
+              <span class="panel-count" id="allocated-route-count">No route selected</span>
+            </div>
+            <div class="allocation-box">
+              <table class="allocated-table" aria-label="Parcels allocated to destination route">
+                <colgroup>
+                  <col style="width:30px">
+                  <col style="width:40px">
+                  <col style="width:22%">
+                  <col style="width:22%">
+                  <col>
+                  <col style="width:90px">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th class="row-marker">#</th>
+                    <th class="checkbox-col center"><input type="checkbox" id="select-all-allocated" aria-label="Select all allocated parcels" disabled></th>
+                    <th>Parcel</th>
+                    <th>Consignment</th>
+                    <th>Delivery Area</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="allocated-table-body">
+                  <tr>
+                    <td class="empty-cell" colspan="6">Selected parcels will appear here after Move.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ── Footer ─────────────────────────────────────────────── -->
+    <div class="footer-row">
+      <span style="font-weight:600; color:var(--text-primary);">POD Update Application</span>
+      <div class="footer-status">
+        <span class="status-dot"></span>
+        <span id="last-action">POD Split Route screen loaded</span>
+      </div>
+    </div>
+
+  </div><!-- /.app-window -->
+
+  <script>
+    const users = [
+      "001", "005", "006", "014", "015", "016", "019", "021",
+      "026", "034", "038", "039", "041", "046", "051", "068",
+      "080", "081", "082", "083", "084", "085", "087", "088", "089"
+    ];
+
+    const routes = Array.from({ length: 20 }, (_, index) => String(101 + index));
+
+    const routeParcels = {
+      "101": [
+        { id: "P101-001", name: "Parcel 1", consignment: "CN101001", area: "Birmingham Central", status: "Assigned" },
+        { id: "P101-002", name: "Parcel 2", consignment: "CN101002", area: "Jewellery Quarter", status: "Assigned" },
+        { id: "P101-003", name: "Parcel 3", consignment: "CN101003", area: "Digbeth", status: "Assigned" },
+        { id: "P101-004", name: "Parcel 4", consignment: "CN101004", area: "Edgbaston", status: "Assigned" },
+        { id: "P101-005", name: "Parcel 5", consignment: "CN101005", area: "Harborne", status: "Assigned" },
+        { id: "P101-006", name: "Parcel 6", consignment: "CN101006", area: "Selly Oak", status: "Assigned" },
+        { id: "P101-007", name: "Parcel 7", consignment: "CN101007", area: "Moseley", status: "Assigned" },
+        { id: "P101-008", name: "Parcel 8", consignment: "CN101008", area: "Kings Heath", status: "Assigned" }
+      ],
+      "102": [
+        { id: "P102-001", name: "Parcel 1", consignment: "CN102001", area: "Solihull", status: "Assigned" },
+        { id: "P102-002", name: "Parcel 2", consignment: "CN102002", area: "Shirley", status: "Assigned" },
+        { id: "P102-003", name: "Parcel 3", consignment: "CN102003", area: "Hall Green", status: "Assigned" },
+        { id: "P102-004", name: "Parcel 4", consignment: "CN102004", area: "Acocks Green", status: "Assigned" }
+      ],
+      "103": [
+        { id: "P103-001", name: "Parcel 1", consignment: "CN103001", area: "Walsall", status: "Assigned" },
+        { id: "P103-002", name: "Parcel 2", consignment: "CN103002", area: "Aldridge", status: "Assigned" },
+        { id: "P103-003", name: "Parcel 3", consignment: "CN103003", area: "Bloxwich", status: "Assigned" },
+        { id: "P103-004", name: "Parcel 4", consignment: "CN103004", area: "Willenhall", status: "Assigned" },
+        { id: "P103-005", name: "Parcel 5", consignment: "CN103005", area: "Darlaston", status: "Assigned" }
+      ],
+      "104": [
+        { id: "P104-001", name: "Parcel 1", consignment: "CN104001", area: "Coventry", status: "Assigned" },
+        { id: "P104-002", name: "Parcel 2", consignment: "CN104002", area: "Tile Hill", status: "Assigned" },
+        { id: "P104-003", name: "Parcel 3", consignment: "CN104003", area: "Binley", status: "Assigned" }
+      ]
+    };
+
+    let activeRoute = "";
+    let activeUser = "";
+    let selectedParcelIds = new Set();
+    let selectedAllocatedIds = new Set();
+    let allocatedParcels = [];
+    let hasUnsavedChanges = false;
+
+    const userSelect           = document.getElementById("user-select");
+    const routeSelect          = document.getElementById("route-select");
+    const allocateRouteSelect  = document.getElementById("allocate-route-select");
+    const searchBtn            = document.getElementById("search-btn");
+    const moveArrowBtn         = document.getElementById("move-arrow-btn");
+    const reverseArrowBtn      = document.getElementById("reverse-arrow-btn");
+    const clearBtn             = document.getElementById("clear-btn");
+    const saveBtn              = document.getElementById("save-btn");
+    const selectAll            = document.getElementById("select-all-parcels");
+    const selectAllAllocated   = document.getElementById("select-all-allocated");
+    const tableBody            = document.getElementById("parcel-table-body");
+    const allocatedTableBody   = document.getElementById("allocated-table-body");
+    const allocatedRouteCount  = document.getElementById("allocated-route-count");
+    const lastAction           = document.getElementById("last-action");
+    const selectionCount       = document.getElementById("selection-count");
+
+    function init() {
+      userSelect.appendChild(new Option("-- Select User --", ""));
+      users.forEach((user) => userSelect.appendChild(new Option(user, user)));
+
+      routeSelect.appendChild(new Option("-- Select Route --", ""));
+      routes.forEach((route) => routeSelect.appendChild(new Option(route, route)));
+
+      searchBtn.addEventListener("click", searchRoute);
+      moveArrowBtn.addEventListener("click", moveSelectedParcels);
+      reverseArrowBtn.addEventListener("click", reverseSelectedParcels);
+      clearBtn.addEventListener("click", clearSelection);
+      saveBtn.addEventListener("click", saveSplitRoute);
+      selectAll.addEventListener("change", toggleAllParcels);
+      selectAllAllocated.addEventListener("change", toggleAllAllocated);
+      allocateRouteSelect.addEventListener("change", () => {
+        allocatedParcels = [];
+        selectedAllocatedIds.clear();
+        hasUnsavedChanges = false;
+        renderAllocatedTable();
+        updateActionState();
+      });
+      routeSelect.addEventListener("change", () => {
+        resetLoadedRoute("From route changed. Click Search to load parcels.");
+        updateAllocateOptions();
+      });
+      userSelect.addEventListener("change", () => resetLoadedRoute("User changed. Click Search to load parcels."));
+
+      updateAllocateOptions();
+      renderAllocatedTable();
+      updateActionState();
+    }
+
+    function searchRoute() {
+      if (!userSelect.value || !routeSelect.value || !allocateRouteSelect.value) {
+        setStatus("Select user, from route, and allocate route before searching.");
+        updateActionState();
+        return;
+      }
+
+      activeUser  = userSelect.value;
+      activeRoute = routeSelect.value;
+      selectedParcelIds    = new Set();
+      selectedAllocatedIds = new Set();
+      allocatedParcels  = [];
+      hasUnsavedChanges = false;
+      updateAllocateOptions();
+      renderParcelTable();
+      renderAllocatedTable();
+      setStatus("Searched user " + activeUser + ", from Route " + activeRoute + ", allocate to Route " + allocateRouteSelect.value + ".");
+    }
+
+    function updateAllocateOptions(preferredRoute = allocateRouteSelect.value) {
+      const sourceRoute   = activeRoute || routeSelect.value;
+      const allowedRoutes = routes.filter((route) => route !== sourceRoute);
+      allocateRouteSelect.innerHTML = "";
+
+      allocateRouteSelect.appendChild(new Option("-- Select Route --", ""));
+      allowedRoutes.forEach((route) => {
+        allocateRouteSelect.appendChild(new Option(route, route));
+      });
+
+      allocateRouteSelect.value = allowedRoutes.includes(preferredRoute) ? preferredRoute : "";
+      updateActionState();
+    }
+
+    function resetLoadedRoute(message) {
+      activeRoute = "";
+      selectedParcelIds    = new Set();
+      selectedAllocatedIds = new Set();
+      allocatedParcels  = [];
+      hasUnsavedChanges = false;
+      document.getElementById("route-parcel-count").textContent = "No route selected";
+      tableBody.innerHTML = '<tr><td class="empty-cell" colspan="6">Search user and from route, then click Search.</td></tr>';
+      renderAllocatedTable();
+      setStatus(message);
+      updateActionState();
+    }
+
+    function renderParcelTable() {
+      tableBody.innerHTML = "";
+
+      if (!activeRoute) {
+        tableBody.innerHTML = '<tr><td class="empty-cell" colspan="6">Search user and from route, then click Search.</td></tr>';
+        updateActionState();
+        return;
+      }
+
+      const parcels = routeParcels[activeRoute] || [];
+      document.getElementById("route-parcel-count").textContent = parcels.length + " parcel" + (parcels.length === 1 ? "" : "s");
+
+      if (parcels.length === 0) {
+        tableBody.innerHTML = '<tr><td class="empty-cell" colspan="6">No parcels are currently assigned to Route ' + activeRoute + '.</td></tr>';
+        updateActionState();
+        return;
+      }
+
+      parcels.forEach((parcel) => {
+        const row = document.createElement("tr");
+        const checked = selectedParcelIds.has(parcel.id);
+        row.className = "route-row" + (checked ? " selected" : "");
+        row.dataset.parcelId = parcel.id;
+        row.innerHTML = [
+          '<td class="row-marker">' + (checked ? "›" : "") + '</td>',
+          '<td class="checkbox-col"><input class="parcel-check" type="checkbox" aria-label="Select ' + parcel.name + '" ' + (checked ? "checked" : "") + '></td>',
+          '<td><strong>' + parcel.name + '</strong></td>',
+          '<td style="color:var(--text-secondary)">' + parcel.consignment + '</td>',
+          '<td style="color:var(--text-secondary)">' + parcel.area + '</td>',
+          '<td><span class="status-pill">' + parcel.status + '</span></td>'
+        ].join("");
+
+        row.addEventListener("click", (event) => {
+          if (event.target.classList.contains("parcel-check")) {
+            setParcelSelected(parcel.id, event.target.checked);
+            return;
+          }
+          setParcelSelected(parcel.id, !selectedParcelIds.has(parcel.id));
+        });
+
+        tableBody.appendChild(row);
+      });
+
+      updateActionState();
+    }
+
+    function renderAllocatedTable() {
+      const destinationRoute = allocateRouteSelect.value;
+      allocatedTableBody.innerHTML = "";
+
+      if (!activeRoute || !destinationRoute) {
+        allocatedRouteCount.textContent = "No route selected";
+        allocatedTableBody.innerHTML = '<tr><td class="empty-cell" colspan="6">Selected parcels will appear here after Move.</td></tr>';
+        selectAllAllocated.disabled = true;
+        return;
+      }
+
+      allocatedRouteCount.textContent = allocatedParcels.length + " allocated";
+
+      if (allocatedParcels.length === 0) {
+        allocatedTableBody.innerHTML = '<tr><td class="empty-cell" colspan="6">Select parcels from the left and click Move.</td></tr>';
+        selectAllAllocated.disabled = true;
+        return;
+      }
+
+      selectAllAllocated.disabled = false;
+
+      allocatedParcels.forEach((parcel, index) => {
+        const isSelected = selectedAllocatedIds.has(parcel.id);
+        const row = document.createElement("tr");
+        row.className = "allocated-row" + (isSelected ? " selected" : "");
+        row.dataset.parcelId = parcel.id;
+        row.innerHTML = [
+          '<td class="row-marker" style="color:' + (isSelected ? 'var(--brand)' : 'var(--brand)') + ';font-weight:600;">' + (index + 1) + '</td>',
+          '<td class="checkbox-col"><input class="allocated-check" type="checkbox" aria-label="Select ' + parcel.name + '" ' + (isSelected ? 'checked' : '') + '></td>',
+          '<td><strong>' + parcel.name + '</strong></td>',
+          '<td style="color:var(--text-secondary)">' + parcel.consignment + '</td>',
+          '<td style="color:var(--text-secondary)">' + parcel.area + '</td>',
+          '<td><span class="status-pill">' + parcel.status + '</span></td>'
+        ].join("");
+
+        row.addEventListener("click", (event) => {
+          if (event.target.classList.contains("allocated-check")) {
+            setAllocatedSelected(parcel.id, event.target.checked);
+            return;
+          }
+          setAllocatedSelected(parcel.id, !selectedAllocatedIds.has(parcel.id));
+        });
+
+        allocatedTableBody.appendChild(row);
+      });
+
+      syncAllocatedSelectAll();
+    }
+
+    function setParcelSelected(parcelId, shouldSelect) {
+      if (shouldSelect) {
+        selectedParcelIds.add(parcelId);
+      } else {
+        selectedParcelIds.delete(parcelId);
+      }
+      renderParcelRowsSelection();
+      updateActionState();
+    }
+
+    function renderParcelRowsSelection() {
+      document.querySelectorAll(".route-row").forEach((row) => {
+        const isSelected = selectedParcelIds.has(row.dataset.parcelId);
+        row.classList.toggle("selected", isSelected);
+        row.querySelector(".row-marker").textContent = isSelected ? "›" : "";
+        row.querySelector(".parcel-check").checked = isSelected;
+      });
+    }
+
+    function toggleAllParcels() {
+      const parcels = routeParcels[activeRoute] || [];
+      if (selectAll.checked) {
+        parcels.forEach((parcel) => selectedParcelIds.add(parcel.id));
+      } else {
+        selectedParcelIds.clear();
+      }
+      renderParcelRowsSelection();
+      updateActionState();
+    }
+
+    function clearSelection() {
+      // Reset dropdowns to blank
+      userSelect.value         = "";
+      routeSelect.value        = "";
+
+      // Reset all state
+      activeRoute          = "";
+      activeUser           = "";
+      selectedParcelIds    = new Set();
+      selectedAllocatedIds = new Set();
+      allocatedParcels     = [];
+      hasUnsavedChanges = false;
+
+      // Reset allocate route dropdown to blank placeholder
+      updateAllocateOptions("");
+
+      // Reset both tables to empty state
+      document.getElementById("route-parcel-count").textContent = "No route selected";
+      tableBody.innerHTML = '<tr><td class="empty-cell" colspan="6">Search user and from route, then click Search.</td></tr>';
+      renderAllocatedTable();
+
+      setStatus("All cleared.");
+      updateActionState();
+    }
+
+    function updateActionState() {
+      const parcels          = activeRoute ? routeParcels[activeRoute] || [] : [];
+      const selectedCount    = selectedParcelIds.size;
+      const allocatedCount   = selectedAllocatedIds.size;
+      const destinationRoute = allocateRouteSelect.value;
+      const hasAllocatedRows = allocatedParcels.length > 0;
+      const canSearch        = Boolean(userSelect.value && routeSelect.value && destinationRoute);
+      const canMove          = Boolean(activeRoute && destinationRoute && selectedCount > 0);
+      const canReverse       = Boolean(activeRoute && hasAllocatedRows && allocatedCount > 0);
+      const canSave          = Boolean(activeRoute && destinationRoute && hasAllocatedRows && hasUnsavedChanges);
+
+      searchBtn.disabled       = !canSearch;
+      moveArrowBtn.disabled    = !canMove;
+      reverseArrowBtn.disabled = !canReverse;
+      clearBtn.disabled        = false;
+      saveBtn.disabled         = !canSave;
+      selectionCount.textContent = selectedCount + " selected";
+      selectAll.disabled       = !activeRoute || parcels.length === 0;
+      selectAll.checked        = parcels.length > 0 && selectedCount === parcels.length;
+      selectAll.indeterminate  = selectedCount > 0 && selectedCount < parcels.length;
+    }
+
+    function moveSelectedParcels() {
+      const destinationRoute = allocateRouteSelect.value;
+
+      if (!activeRoute || !destinationRoute || selectedParcelIds.size === 0) {
+        setStatus("Select destination route and at least one parcel to move.");
+        return;
+      }
+
+      const selectedIds  = new Set(selectedParcelIds);
+      const movedParcels = [];
+      routeParcels[activeRoute] = (routeParcels[activeRoute] || []).filter((parcel) => {
+        if (selectedIds.has(parcel.id)) {
+          movedParcels.push({ ...parcel, status: "Assigned" });
+          return false;
+        }
+        return true;
+      });
+
+      routeParcels[destinationRoute] = (routeParcels[destinationRoute] || []).concat(movedParcels);
+      allocatedParcels = allocatedParcels.concat(movedParcels);
+      hasUnsavedChanges = true;
+      selectedParcelIds.clear();
+      renderParcelTable();
+      renderAllocatedTable();
+      setStatus("Moved " + movedParcels.length + " parcel" + (movedParcels.length === 1 ? "" : "s") + " from Route " + activeRoute + " to Route " + allocateRouteSelect.value + ".");
+    }
+
+    function reverseSelectedParcels() {
+      if (!activeRoute || allocatedParcels.length === 0 || selectedAllocatedIds.size === 0) {
+        setStatus("Select at least one allocated parcel to reverse.");
+        return;
+      }
+
+      const reverseIds  = new Set(selectedAllocatedIds);
+      const reversedParcels = [];
+      const destinationRoute = allocateRouteSelect.value;
+
+      allocatedParcels = allocatedParcels.filter((parcel) => {
+        if (reverseIds.has(parcel.id)) {
+          reversedParcels.push({ ...parcel, status: "Assigned" });
+          return false;
+        }
+        return true;
+      });
+
+      // Remove from destination route and put back in source route
+      routeParcels[destinationRoute] = (routeParcels[destinationRoute] || []).filter(
+        (p) => !reverseIds.has(p.id)
+      );
+      routeParcels[activeRoute] = (routeParcels[activeRoute] || []).concat(reversedParcels);
+
+      selectedAllocatedIds.clear();
+      hasUnsavedChanges = allocatedParcels.length > 0;
+      renderParcelTable();
+      renderAllocatedTable();
+      setStatus("Reversed " + reversedParcels.length + " parcel" + (reversedParcels.length === 1 ? "" : "s") + " back to Route " + activeRoute + ".");
+    }
+
+    function saveSplitRoute() {
+      const destinationRoute = allocateRouteSelect.value;
+
+      if (!activeUser || !activeRoute || !destinationRoute) {
+        setStatus("Search user, from route, and allocate route before saving.");
+        return;
+      }
+
+      if (allocatedParcels.length === 0) {
+        setStatus("Move at least one parcel before saving.");
+        return;
+      }
+
+      const savedCount = allocatedParcels.length;
+      hasUnsavedChanges = false;
+      selectedParcelIds.clear();
+      selectedAllocatedIds.clear();
+      renderParcelRowsSelection();
+      renderAllocatedRowsSelection();
+      setStatus("Saved " + savedCount + " parcel" + (savedCount === 1 ? "" : "s") + " from Route " + activeRoute + " to Route " + destinationRoute + ".");
+      updateActionState();
+    }
+
+    function setAllocatedSelected(parcelId, shouldSelect) {
+      if (shouldSelect) {
+        selectedAllocatedIds.add(parcelId);
+      } else {
+        selectedAllocatedIds.delete(parcelId);
+      }
+      renderAllocatedRowsSelection();
+      updateActionState();
+    }
+
+    function renderAllocatedRowsSelection() {
+      document.querySelectorAll(".allocated-row").forEach((row) => {
+        const isSelected = selectedAllocatedIds.has(row.dataset.parcelId);
+        row.classList.toggle("selected", isSelected);
+        row.querySelector(".allocated-check").checked = isSelected;
+      });
+      syncAllocatedSelectAll();
+    }
+
+    function syncAllocatedSelectAll() {
+      const count = allocatedParcels.length;
+      const sel   = selectedAllocatedIds.size;
+      selectAllAllocated.checked       = count > 0 && sel === count;
+      selectAllAllocated.indeterminate = sel > 0 && sel < count;
+    }
+
+    function toggleAllAllocated() {
+      if (selectAllAllocated.checked) {
+        allocatedParcels.forEach((p) => selectedAllocatedIds.add(p.id));
+      } else {
+        selectedAllocatedIds.clear();
+      }
+      renderAllocatedRowsSelection();
+      updateActionState();
+    }
+
+    function setStatus(message) {
+      lastAction.textContent = message;
+    }
+
+    init();
+  </script>
+</body>
+</html>
